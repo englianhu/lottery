@@ -1,0 +1,156 @@
+---
+title: "Lottery Analysis 彩票分析"
+subtitle: "福彩3D"
+author: "[®γσ, Eng Lian Hu](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸则道®"
+date: "2017年6月15日"
+output:
+  tint::tintHtml: 
+     self_contained: FALSE
+bibliography: skeleton.bib
+link-citations: yes
+---
+
+# 1. 介绍
+
+  彩票市场在中国内地甚至全球的市场占有份额日益增加，越来越多赌徒热爱购买彩票。今天僕尝试分析随机内地彩票---**福彩3D**为数据，分析是否可能从中获利。
+
+## 1.1 环境设置
+
+  环境设置与读取程序包。
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages(library('BBmisc'))
+suppressAll(library('rvest'))
+suppressAll(library('plyr'))
+suppressAll(library('dplyr'))
+suppressAll(library('magrittr'))
+suppressAll(library('stringr'))
+suppressAll(library('lubridate'))
+suppressAll(library('devtools'))
+suppressAll(library('openxlsx'))
+suppressAll(library('DT'))
+suppressAll(library('mvtnorm'))
+suppressAll(library('PoisNor'))
+suppressAll(library('flexmix'))
+suppressAll(library('poilog'))
+#https://github.com/lamortenera/kfoots
+suppressAll(library('kfoots')) ##Fit mixture model or a hidden markov model
+```
+
+# 2. 读取数据
+
+  [福彩3D: 直选走势](http://sports.sina.com.cn/l/tubiao/3d_jibenzoushitu.html)数据从*2016158期*至*2017158期*，一共有360个观测数据。该福彩类型规则乃预测3个随机数字，从000至999。
+
+```{r read-data}
+## 
+## http://baidu.lecai.com/lottery/draw/list/52?type=latest&num=100 ##要下载txt或xlsx文件，需要登入账户
+#'@ read_html('http://sports.sina.com.cn/l/tubiao/3d_jibenzoushitu.html') %>% html('table_A')
+
+## http://zst.sina.aicai.com/gaopin_cqssc/?sDate=&eDate=&q=t100&sortTag=up ##时时彩上至五个随机变量，比福彩3D复杂
+
+## http://sports.sina.com.cn/l/tubiao/3d_jibenzoushitu.html ## 快三
+
+ltry_data <- read.xlsx(xlsxFile = './data/lottery_data.xlsx', detectDates = TRUE) %>% .[1:5] %>% tbl_df %>% mutate(Result = as.numeric(paste0(Result1, Result2, Result3)))
+
+datatable(ltry_data)
+```
+
+*数据图2.1：福彩3D开彩数据*
+
+  从以上数据图2.1，首先僕绘制个频率图。
+
+```{r plot-1}
+##观测数据量
+length(ltry_data$Result)
+
+##过滤重复开彩成绩
+length(unique(ltry_data$Result))
+
+hist(ltry_data$Result)
+```
+
+*数据图2.2：福彩3D开彩数据频率图*
+
+  以 000 至 999 三位数随机变量，一般上会以普通频率分布分析，然而由于三位数字非出现在同一个单位（slot）里而是个别三个随机变量，因此*多变量泊松模式*将能分析。
+
+# 3. 数学模式
+
+   - `kfoots`程序包使用马克夫链，举例此期开彩010，该模式将分析及预测每当开彩该成绩后的下一个成绩（状态的转换率）的机率
+   - `PoisNor`程序包提供多随机变量产生器及相关系数分析
+   - `poilog`程序包分析双变量泊松模式
+
+```{r model}
+
+```
+
+
+# 4. 投注模式
+
+  由于凯利投资模式，在此使用该模式。有关凯利模式投注，请参阅：
+  - [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion)
+  - [Job Application - Quantitative Analyst (binary.com)](https://github.com/englianhu/binary.com-interview-question)
+
+```{r}
+
+
+```
+
+# 5. 盈利
+
+```{r}
+
+
+```
+
+
+
+# 6. 结论
+
+  Summary of the betting
+
+```{r}
+
+```
+
+# 7. 附录
+
+## 7.1 文献明细
+
+  It's useful to record some information about how your file was created.
+
+  - File creation date: 2017-06-15
+  - File latest updated date: `r Sys.Date()`
+  - `r R.version.string`
+  - R version (short form): `r getRversion()`
+  - [**rmarkdown** package](https://github.com/rstudio/rmarkdown) version: `r packageVersion('rmarkdown')`
+  - [**tint** package](http://dirk.eddelbuettel.com/code/tint.html) version: `r packageVersion('tint')`
+  - File version: 1.0.0
+  - Author Profile: [®γσ, Eng Lian Hu](englianhu.github.io/2016/12/ryo-eng.html)
+  - GitHub: [Source Code](https://github.com/englianhu/lottery)
+  - Additional session information
+  
+```{r info, echo = FALSE, warning = FALSE, results = 'asis'}
+suppressMessages(library('dplyr'))
+suppressMessages(library('formattable'))
+
+lubridate::now()
+sys1 <- devtools::session_info()$platform %>% unlist %>% data.frame(Category = names(.), session_info = .)
+rownames(sys1) <- NULL
+sys1 %>% formattable %>% as.htmlwidget
+
+data.frame(Sys.info()) %>% mutate(Category = rownames(.)) %>% .[2:1] %>% rename(Category = Category, Sys.info =  Sys.info..) %>% formattable %>% as.htmlwidget
+
+rm(sys1)
+```
+
+## 7.2 版本
+  
+  - 文献版本: 1.0.0 - *"2017-06-15 20:47:50 JST"*
+
+
+## 7.3 感言
+
+  
+
+
