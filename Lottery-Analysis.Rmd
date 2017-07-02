@@ -19,6 +19,8 @@ link-citations: yes
   环境设置与读取程序包。
 
 ```{r setup}
+options(warn = -1)
+
 knitr::opts_chunk$set(echo = TRUE)
 suppressPackageStartupMessages(library('BBmisc'))
 suppressAll(library('rvest'))
@@ -35,6 +37,7 @@ suppressAll(library('PoisNor'))
 suppressAll(library('flexmix'))
 suppressAll(library('poilog'))
 #https://github.com/lamortenera/kfoots
+suppressAll(library('mvrpois'))
 suppressAll(library('kfoots')) ##Fit mixture model or a hidden markov model
 ```
 
@@ -67,7 +70,7 @@ length(ltry_data$Result)
 ##过滤重复开彩成绩
 length(unique(ltry_data$Result))
 
-hist(ltry_data$Result)
+hist(ltry_data$Result, main = "3D Lottery Histogram", xlab = "Number (Digit from 0 to 999)")
 ```
 
 *数据图2.2：福彩3D开彩数据频率图*
@@ -76,9 +79,15 @@ hist(ltry_data$Result)
 
 # 3. 数学模式
 
-   - `kfoots`程序包使用马克夫链，举例此期开彩010，该模式将分析及预测每当开彩该成绩后的下一个成绩（状态的转换率）的机率
-   - `PoisNor`程序包提供多随机变量产生器及相关系数分析
-   - `poilog`程序包分析双变量泊松模式
+   - [`kfoots`](https://github.com/lamortenera/kfoots)程序包使用马克夫链，举例此期开彩010，该模式将分析及预测每当开彩该成绩后的下一个成绩（状态的转换率）的机率
+   - [`PoisNor`](https://cran.r-project.org/package=PoisNor)程序包提供多随机变量产生器及相关系数分析
+   - [`poilog`](https://cran.r-project.org/package=poilog)程序包分析双变量泊松模式
+   - [`mvrpois`](https://github.com/alekdimi/mvrpois)程序包分析多变量泊松模式
+
+  在此，僕使用`mvpois`多变量泊松模式分析仨变量泊松3D彩票数据，有关详情请查阅[**Multivariate Poisson Regression with Covariance Structure** *by Karlis, Dimitris, and Loukia Meligkotsidou (2005)*](https://www.researchgate.net/publication/220286453_Multivariate_Poisson_Regression_with_Covariance_Structure)。
+  
+  
+  
 
 ```{r model}
 
@@ -111,6 +120,10 @@ hist(ltry_data$Result)
 
 ```{r}
 
+```
+
+```{r close-Opt}
+options(warn = 0)
 ```
 
 # 7. 附录
@@ -149,8 +162,14 @@ rm(sys1)
   - 文献版本: 1.0.0 - *"2017-06-15 20:47:50 JST"*
 
 
-## 7.3 感言
+## 7.3 参考文献
+
+1. [**Bayesian Multivariate Poisson Regression for Models of Injury Count, by Severity** *by Jianming Ma and Kara M. Kockelman (2006)*](https://github.com/englianhu/lottery/tree/master/reference/Bayesian%20Multivariate%20Poisson%20Regression%20for%20Models%20of%20Injury%20Count%2C%20by%20Severity.pdf)
+2. [**FlexMix - An R package for finite mixture modelling** *by Bettina Grun and Friedrich Leisch (2007)*](https://github.com/englianhu/lottery/tree/master/reference/FlexMix%20-%20An%20R%20package%20for%20finite%20mixture%20modelling.pdf)
+
+## 7.4 感言
 
   
 
+**Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
 
