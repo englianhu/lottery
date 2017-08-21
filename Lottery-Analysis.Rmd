@@ -1,12 +1,17 @@
 ---
-title: "Lottery Analysis 彩票分析"
+title: "Lottery 3D Analysis 彩票分析"
 subtitle: "福彩3D"
-author: "[®γσ, Eng Lian Hu](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸则道®"
+author: "[<span style='color:blue'>®γσ, Eng Lian Hu</span>](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸则道®"
 date: "2017年6月15日"
 output:
-  tint::tintHtml: 
-     self_contained: FALSE
-bibliography: skeleton.bib
+  tufte::tufte_html:
+    toc: yes
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+  tufte::tufte_book:
+    citation_package: natbib
+    latex_engine: xelatex
 link-citations: yes
 ---
 
@@ -18,11 +23,14 @@ link-citations: yes
 
   环境设置与读取程序包。
 
-```{r setup}
-options(warn = -1)
+```{r setup, message = FALSE}
+## Remove all objects (includes hidden objects).
+rm(list = ls(all = TRUE))
+options(warn = -1) #Do not display warning messages.
 
 knitr::opts_chunk$set(echo = TRUE)
 suppressPackageStartupMessages(library('BBmisc'))
+suppressAll(library('knitr'))
 suppressAll(library('rvest'))
 suppressAll(library('plyr'))
 suppressAll(library('dplyr'))
@@ -37,13 +45,18 @@ suppressAll(library('PoisNor'))
 suppressAll(library('flexmix'))
 suppressAll(library('poilog'))
 #https://github.com/lamortenera/kfoots
-suppressAll(library('mvrpois'))
 suppressAll(library('kfoots')) ##Fit mixture model or a hidden markov model
+suppressAll(library('mvrpois'))
+suppressAll(library('matrixStats')) # mvrpois : dependency = TRUE
+suppressAll(library('rstan')) # mvrpois : dependency = TRUE
+
+## Modified or call hidden functions in mvrpois.
+l_ply(dir(paste0(getwd(), '/function/')), function(funs) source(paste0(getwd(), '/function/', funs)))#, local = TRUE))
 ```
 
 # 2. 读取数据
 
-  [福彩3D: 直选走势](http://sports.sina.com.cn/l/tubiao/3d_jibenzoushitu.html)数据从*2016158期*至*2017158期*，一共有360个观测数据。该福彩类型规则乃预测3个随机数字，从000至999。
+  [<span style='color:blue'>福彩3D: 直选走势</span>](http://sports.sina.com.cn/l/tubiao/3d_jibenzoushitu.html)数据从*2016158期*至*2017158期*，一共有360个观测数据。该福彩类型规则乃预测3个随机数字，从000至999。
 
 ```{r read-data}
 ## 
@@ -79,17 +92,68 @@ hist(ltry_data$Result, main = "3D Lottery Histogram", xlab = "Number (Digit from
 
 # 3. 数学模式
 
-   - [`kfoots`](https://github.com/lamortenera/kfoots)程序包使用马克夫链，举例此期开彩010，该模式将分析及预测每当开彩该成绩后的下一个成绩（状态的转换率）的机率
-   - [`PoisNor`](https://cran.r-project.org/package=PoisNor)程序包提供多随机变量产生器及相关系数分析
-   - [`poilog`](https://cran.r-project.org/package=poilog)程序包分析双变量泊松模式
-   - [`mvrpois`](https://github.com/alekdimi/mvrpois)程序包分析多变量泊松模式
+   - `kfoots`：[<span style='color:blue'>kfoots</span>](https://github.com/lamortenera/kfoots)程序包使用马克夫链，举例此期开彩010，该模式将分析及预测每当开彩该成绩后的下一个成绩（状态的转换率）的机率
+   - `PoisNor`：[<span style='color:blue'>PoisNor</span>](https://cran.r-project.org/package=PoisNor)程序包提供多随机变量产生器及相关系数分析
+   - `poilog`：[<span style='color:blue'>poilog</span>](https://cran.r-project.org/package=poilog)程序包分析双变量泊松模式
+   - `mvrpois`：[<span style='color:blue'>mvrpois</span>](https://github.com/alekdimi/mvrpois)程序包分析多变量泊松模式
 
-  在此，僕使用`mvpois`多变量泊松模式分析仨变量泊松3D彩票数据，有关详情请查阅[**Multivariate Poisson Regression with Covariance Structure** *by Karlis, Dimitris, and Loukia Meligkotsidou (2005)*](https://www.researchgate.net/publication/220286453_Multivariate_Poisson_Regression_with_Covariance_Structure)。
-  
-  
-  
+  在此，僕使用`mvrpois`多变量泊松模式分析**仨变量泊松**3D彩票数据，有关详情请查阅*Dimitris Karlis and Loukia Meligkotsidou (2005)^[**7.3 参考文献**中的4th文献]*和*Dimitris Karlis (2002)^[**7.3 参考文献**中的3rd文献]*。
 
-```{r model}
+$$(X_{1},X_{2},X_{3})_{i} ~ 3 - Pois(\theta_{1i},\theta_{2i},\theta_{3i},\theta_{12i},\theta_{13i},\theta_{23i}) \dots equation\ 3.1$$
+
+  - $log(\theta_{1i}) = \alpha_{1} + \beta_{1}z_{i}$
+  - $log(\theta_{2i}) = \alpha_{2} + \beta_{2}z_{i}$
+  - $log(\theta_{3i}) = \alpha_{3} + \beta_{3}z_{i}$
+  - $log(\theta_{12i}) = \alpha_{4} + \beta_{4}z_{i}$
+  - $log(\theta_{13i}) = \alpha_{5} + \beta_{5}z_{i}$
+  - $log(\theta_{23i}) = \alpha_{6} + \beta_{6}z_{i}$
+
+联合分布函数将为：
+
+$$P(X = x) = \sum_{(y_{12},y_{13},y_{23})\in C}\frac{exp(-\sum\theta_{i})\theta_{1}^{x_{1}-y_{12}-y_{13}}\theta_{2}^{x_{2}-y_{12}-y_{23}}\theta_{3}^{x_{3}-y_{13}-y_{23}}\theta_{12}^{y_{12}}\theta_{13}^{y_{13}}\theta_{23}^{y_{23}}}{(x_{1}-y_{12}-y{13})!(x_{2}-y_{12}-y{23})!(x_{3}-y_{13}-y{23})!y_{12}!y_{13}!y_{23}!} \dots equation\ 3.2$$
+  而 $C \subset N^3$ 设为： 
+
+$$C = (y_{12},y_{13},y_{23}) \in N^3 : \{y_{12}+y_{13}\leq x_{1}\} \cup \{y_{12}+y_{23}\leq x_{2}\} \cup \{y_{13}+y_{23}\leq x_{3}\} \neq \theta$$
+
+  **Rerefences for multivariate Poisson models : **
+  
+  - [<span style='color:blue'>Can a Multivariate Poisson Distribution be implemented in Stan?</span>](https://groups.google.com/forum/#!topic/stan-users/3VHq_GxGWEw)
+  - [<span style='color:blue'>n-mixture model in Stan? marginalizing</span>](https://groups.google.com/forum/#!newtopic/stan-users/stan-users/9mMsp1oB69g)
+  - [<span style='color:blue'>karlis-ntzoufras-reproduction/model.stan</span>](https://github.com/Torvaney/karlis-ntzoufras-reproduction/blob/master/model.stan)
+  - [<span style='color:blue'>Reproductions of models for football (soccer) matches in Stan/PyStan</span>](https://github.com/Torvaney/soccerstan)^[So far, the following models have been implemented:] ^[1) Maher (1982) - Modelling Association Football Scores - maher] ^[2) Dixon and Coles (1997) - Modelling Association Football Scores and Inefficiencies in the Football Betting Market - dixon-coles] ^[3)Karlis and Ntzoufras (2008) - Bayesian modelling of football outcomes (using the Skellam's distribution) - karlis-ntzoufras]
+
+```{r trvPois, eval = FALSE}
+## =========================== eval = FALSE ==============================
+## get the trivariate sample data and convert to matric format.
+m <- ltry_data %>% select(Result1, Result2, Result3) %>% as.matrix
+#'@ m <- ltry_data %>% select(Date, Result1, Result2, Result3) %>% as.matrix
+#'@ adply(m, 1, transform, mvp = mvp.fit(method = 'HMC'))
+
+## ------------------------ PENDING --------------------------------------
+## 1) missing files : 'karlis.stan' and 'karlis.covariates.stan'.
+## 2) missing codes : cov() inside gibbs() inside mvp.fit.R
+## ------------------------ PENDING --------------------------------------
+
+## Hamiltonian Monte Carlo (HMC)
+fit.HMC <- mvp.fit(m, method = 'HMC')
+
+## Gibbs MCMC
+fit.Gibbs <- mvp.fit(m, method = 'Gibbs')
+
+## ==============================================================================
+## 1) method = Monte Carlo samples, default iterations : n.mc = 10000.
+tv.mc <- mvp.prob(m, seq(0, 9), logarithm = FALSE, method = 'MC')
+
+adply(m, 1, transform, prob = mvp.prob(m[, c('Result1', 'Result2', 'Result3')], seq(0, 9), logarithm = FALSE, method = 'MC'))
+
+
+
+## 2) method = 'recursive', but it is equal to 'analytical'.
+tv.rc <- mvp.prob(m, seq(0, 9), logarithm = FALSE, method = 'recursive')
+
+## 3) method = 'analytical', but it is equal to 'recursive'.
+tv.an <- mvp.prob(m, seq(0, 9), logarithm = FALSE, method = 'analytical')
+
 
 ```
 
@@ -97,8 +161,9 @@ hist(ltry_data$Result, main = "3D Lottery Histogram", xlab = "Number (Digit from
 # 4. 投注模式
 
   由于凯利投资模式，在此使用该模式。有关凯利模式投注，请参阅：
-  - [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion)
-  - [Job Application - Quantitative Analyst (binary.com)](https://github.com/englianhu/binary.com-interview-question)
+  
+  - [<span style='color:blue'>Application of Kelly Criterion model in Sportsbook Investment</span>](https://github.com/scibrokes/kelly-criterion)
+  - [<span style='color:blue'>Job Application - Quantitative Analyst (binary.com)</span>](https://github.com/englianhu/binary.com-interview-question)
 
 ```{r}
 
@@ -136,11 +201,11 @@ options(warn = 0)
   - File latest updated date: `r Sys.Date()`
   - `r R.version.string`
   - R version (short form): `r getRversion()`
-  - [**rmarkdown** package](https://github.com/rstudio/rmarkdown) version: `r packageVersion('rmarkdown')`
-  - [**tint** package](http://dirk.eddelbuettel.com/code/tint.html) version: `r packageVersion('tint')`
+  - [<span style='color:blue'>**rmarkdown** package</span>](https://github.com/rstudio/rmarkdown) version: `r packageVersion('rmarkdown')`
+  - [<span style='color:blue'>**tint** package</span>](http://dirk.eddelbuettel.com/code/tint.html) version: `r packageVersion('tint')`
   - File version: 1.0.0
-  - Author Profile: [®γσ, Eng Lian Hu](englianhu.github.io/2016/12/ryo-eng.html)
-  - GitHub: [Source Code](https://github.com/englianhu/lottery)
+  - Author Profile: [<span style='color:blue'>®γσ, Eng Lian Hu</span>](englianhu.github.io/2016/12/ryo-eng.html)
+  - GitHub: [<span style='color:blue'>Source Code</span>](https://github.com/englianhu/lottery)
   - Additional session information
   
 ```{r info, echo = FALSE, warning = FALSE, results = 'asis'}
@@ -164,12 +229,16 @@ rm(sys1)
 
 ## 7.3 参考文献
 
-1. [**Bayesian Multivariate Poisson Regression for Models of Injury Count, by Severity** *by Jianming Ma and Kara M. Kockelman (2006)*](https://github.com/englianhu/lottery/tree/master/reference/Bayesian%20Multivariate%20Poisson%20Regression%20for%20Models%20of%20Injury%20Count%2C%20by%20Severity.pdf)
-2. [**FlexMix - An R package for finite mixture modelling** *by Bettina Grun and Friedrich Leisch (2007)*](https://github.com/englianhu/lottery/tree/master/reference/FlexMix%20-%20An%20R%20package%20for%20finite%20mixture%20modelling.pdf)
+1. [<span style='color:blue'>**Bayesian Multivariate Poisson Regression for Models of Injury Count, by Severity** *by Jianming Ma and Kara M. Kockelman (2006)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Bayesian%20Multivariate%20Poisson%20Regression%20for%20Models%20of%20Injury%20Count%2C%20by%20Severity.pdf)
+2. [<span style='color:blue'>**FlexMix - An R package for finite mixture modelling** *by Bettina Grun and Friedrich Leisch (2007)*</span>](https://github.com/englianhu/lottery/tree/master/reference/FlexMix%20-%20An%20R%20package%20for%20finite%20mixture%20modelling.pdf)
+3. [<span style='color:blue'>**Multivariate Poisson Models** *by Dimitris Karlis (2002)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Multivariate%20Poisson%20Models.pdf)
+4. [<span style='color:blue'>**Multivariate Poisson Regression with Covariance Structure (Preview)** *by Dimitris Karlis and Loukia Meligkotsidou (2005)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Multivariate%20Poisson%20Regression%20with%20Covariance%20Structure%20(Preview).pdf)
+5. [<span style='color:blue'>**Package 'poilog'** *by Vidar Grøtan and Steinar Engen (2015)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Package%20'poilog'.pdf)
+6. [<span style='color:blue'>**Resampling Methods for Longitudinal Data Analysis** *by Yue Li (2005)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Resampling%20Methods%20for%20Longitudinal%20Data%20Analysis.pdf)
 
 ## 7.4 感言
 
   
 
-**Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
+**Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [<span style='color:blue'>Scibrokes®</span>](http://www.scibrokes.com)**
 
