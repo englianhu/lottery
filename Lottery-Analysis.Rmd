@@ -1,7 +1,7 @@
 ---
 title: "Lottery 3D Analysis 彩票分析"
 subtitle: "福彩3D"
-author: "[<span style='color:blue'>®γσ, Eng Lian Hu</span>](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸则道®"
+author: "[<span style='color:blue'>®γσ, Eng Lian Hu</span>](https://englianhu.github.io/) <img src='figure/RYO.jpg' width='24'> ®"
 date: "2017年6月15日"
 output:
   tufte::tufte_html:
@@ -235,6 +235,8 @@ rm(sys1)
 4. [<span style='color:blue'>**Multivariate Poisson Regression with Covariance Structure (Preview)** *by Dimitris Karlis and Loukia Meligkotsidou (2005)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Multivariate%20Poisson%20Regression%20with%20Covariance%20Structure%20(Preview).pdf)
 5. [<span style='color:blue'>**Package 'poilog'** *by Vidar Grøtan and Steinar Engen (2015)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Package%20'poilog'.pdf)
 6. [<span style='color:blue'>**Resampling Methods for Longitudinal Data Analysis** *by Yue Li (2005)*</span>](https://github.com/englianhu/lottery/tree/master/reference/Resampling%20Methods%20for%20Longitudinal%20Data%20Analysis.pdf)
+7. [<span style='color:blue'>**彩票的数学知识** *by 阮一峰 (2018)*</span>](http://www.ruanyifeng.com/blog/2018/04/lottery-mathematics.html)
+8. [<span style='color:blue'>**00后买彩票2个月疯狂吸金50万** *by 财经观察 (2018)*</span>](http://www.tw294.cn/)
 
 ## 7.4 感言
 
