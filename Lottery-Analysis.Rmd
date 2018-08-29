@@ -240,6 +240,8 @@ rm(sys1, sys2)
 10. [程阳：美国马萨诸塞州 Cash Winfall 彩票有漏洞! ](http://chengyangblog20.blog.163.com/blog/static/2108302022011771480468/)
 11. [美国夫妇钻开奖漏洞 简单计算后的“必赢”结论](http://sports.sohu.com/20110806/n315531364.shtml)
 12. [Understanding the Kelly Capital Growth Investment Strategy](https://github.com/scibrokes/kelly-criterion/blob/master/references/Understanding%20the%20Kelly%20Capital%20Growth%20Investment%20Strategy.pdf)
+13. [數學家中14次樂透賺進9億元！　 美、澳因他被迫修法](https://www.ettoday.net/news/20180829/1246651.htm)
+14. [樂透能偷吃步？ 經濟學家用這招中14次頭彩賺9億](https://udn.com/news/story/6810/3337660)
 
 ## 感言
 
